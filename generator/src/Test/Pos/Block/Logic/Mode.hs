@@ -62,19 +62,21 @@ import           Pos.AllSecrets (AllSecrets (..), HasAllSecrets (..),
 import           Pos.Chain.Block (HasSlogGState (..))
 import           Pos.Chain.Delegation (DelegationVar, HasDlgConfiguration)
 import           Pos.Chain.Genesis as Genesis (Config (..),
-                     GenesisInitializer (..), GenesisProtocolConstants (..),
-                     GenesisSpec (..), configEpochSlots,
+                     FakeAvvmOptions (..), GenesisInitializer (..),
+                     GenesisProtocolConstants (..), GenesisSpec (..),
+                     TestnetBalanceOptions (..), configEpochSlots,
                      configGeneratedSecretsThrow, gsSecretKeys, mkConfig)
 import           Pos.Chain.Ssc (SscMemTag, SscState)
 import           Pos.Chain.Txp (TxpConfiguration (..))
 import           Pos.Chain.Update (BlockVersionData, UpdateConfiguration)
-import           Pos.Core (SlotId, Timestamp (..))
+import           Pos.Core (CoinPortion (..), SlotId, Timestamp (..))
 import           Pos.Core.Conc (currentTime)
 import           Pos.Core.NetworkMagic (makeNetworkMagic)
 import           Pos.Core.Reporting (HasMisbehaviorMetrics (..),
                      MonadReporting (..))
 import           Pos.Core.Slotting (MonadSlotsData)
-import           Pos.Crypto (ProtocolMagic)
+import           Pos.Crypto (ProtocolMagic (..), ProtocolMagicId (..),
+                     RequiresNetworkMagic (..))
 import           Pos.DB (DBPure, MonadDB (..), MonadDBRead (..),
                      MonadGState (..))
 import qualified Pos.DB as DB
@@ -336,9 +338,24 @@ blockPropertyToProperty
     -> (Genesis.Config -> BlockProperty a)
     -> Property
 blockPropertyToProperty uc tpGen blockProperty =
-    forAll tpGen $ \tp -> withTestParams tp $ \genesisConfig -> monadic
+    forAll tpGen $ \_ -> withTestParams tp $ \genesisConfig -> monadic
         (ioProperty . runBlockTestMode uc genesisConfig tp)
         (blockProperty genesisConfig)
+  where
+    tp = TestParams (Timestamp (fromMicroseconds 0))
+                    defaultTestBlockVersionData
+                    genInit
+                    (TxpConfiguration 200 Set.empty)
+                    (ProtocolMagic (ProtocolMagicId 0) RequiresNoMagic)
+    genInit =
+        let giTestBalance = gTB
+            giFakeAvvmBalance = FakeAvvmOptions 0 0
+            giAvvmBalanceFactor = CoinPortion 0
+            giUseHeavyDlg = False
+            giSeed = 19999
+         in GenesisInitializer {..}
+
+    gTB = TestnetBalanceOptions 10 5 12000 0.75 False
 
 -- | Simplified version of 'blockPropertyToProperty' which uses
 -- 'Arbitrary' instance to generate 'TestParams'.

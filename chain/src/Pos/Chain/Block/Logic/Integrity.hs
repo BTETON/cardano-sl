@@ -196,7 +196,8 @@ verifyHeader pm VerifyHeaderParams {..} h =
                      leaders ^?
                      ix (fromIntegral $ getSlotIndex $
                          siSlot $ mainHeader ^. headerSlotL))
-                  , "block's leader is different from expected one")
+                  , ("block's leader " <> show (mainHeader ^. mainHeaderLeaderKey) <> " is different from expected one " <> show (leaders ^? ix (fromIntegral $ getSlotIndex $ siSlot $ mainHeader ^. headerSlotL)))
+                  )
                 ]
 
     verifyNoUnknown (BlockHeaderGenesis genH) =
