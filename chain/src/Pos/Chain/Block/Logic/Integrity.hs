@@ -196,7 +196,7 @@ verifyHeader pm VerifyHeaderParams {..} h =
                      leaders ^?
                      ix (fromIntegral $ getSlotIndex $
                          siSlot $ mainHeader ^. headerSlotL))
-                  , ("block's leader " <> show (mainHeader ^. mainHeaderLeaderKey) <> " is different from expected one " <> show (leaders ^? ix (fromIntegral $ getSlotIndex $ siSlot $ mainHeader ^. headerSlotL)))
+                  , ("block's leader " <> show (mainHeader ^. mainHeaderLeaderKey) <> " is different from expected one " <> show (leaders ^? ix (fromIntegral $ getSlotIndex $ siSlot $ mainHeader ^. headerSlotL)) <> " at index " <> show (getSlotIndex $ siSlot $ mainHeader ^. headerSlotL) <> " of length " <> show (length leaders) <> " key match " <> show (filter ((==True) . snd) $ zip [(0::Integer)..] (map (\l -> l == (addressHash $ mainHeader ^. mainHeaderLeaderKey)) (toList leaders))))
                   )
                 ]
 
